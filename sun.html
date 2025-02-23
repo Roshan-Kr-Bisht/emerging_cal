@@ -1,0 +1,209 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AI-Based Pricing Elasticity Model</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 20px;
+            text-align: center;
+            background: linear-gradient(to right, lightgreen, seagreen, white);
+        }
+        .container {
+            width: 90%;
+            max-width: 900px;
+            margin: auto;
+            padding: 20px;
+            border-radius: 10px;
+            box-shadow: 2px 2px 15px rgba(0, 0, 0, 0.3);
+            background: linear-gradient(to right, lightyellow, #f5deb3);
+            color: black;
+            font-weight: bold;
+        }
+        .top-controls {
+            display: flex;
+            justify-content: space-between;
+            flex-wrap: wrap;
+            margin-bottom: 20px;
+        }
+        .top-controls select {
+            width: 48%;
+            padding: 10px;
+        }
+        select, button {
+            width: 100%;
+            padding: 10px;
+            margin: 10px 0;
+            border-radius: 5px;
+            border: 1px solid #ccc;
+        }
+        button {
+            background-color: darkgreen;
+            color: white;
+            font-weight: bold;
+            cursor: pointer;
+        }
+        button:hover {
+            background-color: seagreen;
+        }
+        #output {
+            font-size: 20px;
+            font-weight: bold;
+            margin-top: 20px;
+        }
+        @media (max-width: 600px) {
+            .top-controls {
+                flex-direction: column;
+            }
+            .top-controls select {
+                width: 100%;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="top-controls">
+            <select id="language" onchange="updateUI()">
+                <option value="en">English</option>
+                <option value="hi">Hindi</option>
+            </select>
+            
+            <select id="currency" onchange="updateUI()">  
+                <option value="$">USD ($)</option>
+                <option value="₹">INR (₹)</option>
+            </select>
+        </div>
+        
+        <h2 id="header">AI-Based Pricing Elasticity Model</h2>
+        <label id="competitorPriceLabel">Competitor Price ($):</label>
+        <input type="number" id="competitorPrice" placeholder="Enter competitor price">
+        
+        <label id="demandLabel">Demand Sensitivity:</label>
+        <select id="demandSensitivity"></select>
+        
+        <label id="economicLabel">Economic Condition Score:</label>
+        <select id="economicCondition"></select>
+        
+        <label id="customerLabel">Customer Response Factor:</label>
+        <select id="customerResponse"></select>
+        
+        <button onclick="calculatePrice()">Calculate Optimal Price</button>
+        <div id="output"></div>
+    </div>
+    
+    <script>
+        let translations = {
+            en: { 
+                header: "AI-Based Pricing Elasticity Model", 
+                competitorPrice: "Competitor Price", 
+                demand: "Demand Sensitivity:", 
+                economic: "Economic Condition Score:", 
+                customer: "Customer Response Factor:", 
+                demandOptions: [
+                    {text: "Very Low Sensitivity", value: 0.2},
+                    {text: "Low Sensitivity", value: 0.5},
+                    {text: "Moderate Sensitivity", value: 1.0},
+                    {text: "High Sensitivity", value: 1.5},
+                    {text: "Very High Sensitivity", value: 2.0}
+                ],
+                economicOptions: [
+                    {text: "Bad economy/Recession", value: 0.7},
+                    {text: "Slow growth", value: 0.9},
+                    {text: "Stable growth", value: 1.0},
+                    {text: "Strong Economy", value: 1.2}
+                ],
+                customerOptions: [
+                    {text: "Very Sensitive", value: 1.5},
+                    {text: "Price Conscious", value: 1.2},
+                    {text: "Neutral", value: 1.0},
+                    {text: "Loyal", value: 0.8},
+                    {text: "Very Loyal", value: 0.6}
+                ]
+            },
+            hi: { 
+                header: "एआई आधारित मूल्य लोचिता मॉडल", 
+                competitorPrice: "प्रतियोगी मूल्य", 
+                demand: "मांग संवेदनशीलता:", 
+                economic: "आर्थिक स्थिति स्कोर:", 
+                customer: "ग्राहक प्रतिक्रिया कारक:", 
+                demandOptions: [
+                    {text: "बहुत कम संवेदनशीलता", value: 0.2},
+                    {text: "कम संवेदनशीलता", value: 0.5},
+                    {text: "मध्यम संवेदनशीलता", value: 1.0},
+                    {text: "उच्च संवेदनशीलता", value: 1.5},
+                    {text: "बहुत उच्च संवेदनशीलता", value: 2.0}
+                ],
+                economicOptions: [
+                    {text: "खराब अर्थव्यवस्था/मंदी", value: 0.7},
+                    {text: "धीमी वृद्धि", value: 0.9},
+                    {text: "स्थिर वृद्धि", value: 1.0},
+                    {text: "मजबूत अर्थव्यवस्था", value: 1.2}
+                ],
+                customerOptions: [
+                    {text: "बहुत संवेदनशील", value: 1.5},
+                    {text: "मूल्य सचेत", value: 1.2},
+                    {text: "तटस्थ", value: 1.0},
+                    {text: "निष्ठावान", value: 0.8},
+                    {text: "बहुत निष्ठावान", value: 0.6}
+                ]
+            }
+        };
+        
+        function updateUI() {
+            let lang = document.getElementById("language").value;
+            let currency = document.getElementById("currency").value;
+            let t = translations[lang];
+            
+            document.getElementById("header").innerText = t.header;
+            document.getElementById("competitorPriceLabel").innerText = `${t.competitorPrice} (${currency}):`;
+            document.getElementById("demandLabel").innerText = t.demand;
+            document.getElementById("economicLabel").innerText = t.economic;
+            document.getElementById("customerLabel").innerText = t.customer;
+            
+            let updateDropdown = (dropdownId, options) => {
+                let dropdown = document.getElementById(dropdownId);
+                dropdown.innerHTML = "";
+                options.forEach(option => {
+                    let opt = document.createElement("option");
+                    opt.textContent = option.text;
+                    opt.value = option.value;
+                    dropdown.appendChild(opt);
+                });
+            };
+            
+            updateDropdown("demandSensitivity", t.demandOptions);
+            updateDropdown("economicCondition", t.economicOptions);
+            updateDropdown("customerResponse", t.customerOptions);
+        }
+        
+        function calculatePrice() {
+            let competitorPrice = parseFloat(document.getElementById("competitorPrice").value);
+            let demandSensitivity = parseFloat(document.getElementById("demandSensitivity").value);
+            let economicCondition = parseFloat(document.getElementById("economicCondition").value);
+            let customerResponse = parseFloat(document.getElementById("customerResponse").value);
+            let currency = document.getElementById("currency").value;
+            
+            if (isNaN(competitorPrice)) {
+                document.getElementById("output").innerText = "Please enter a valid competitor price";
+                return;
+            }
+            
+            // Simple pricing elasticity calculation
+            let baseMultiplier = 1 + (demandSensitivity * 0.1);
+            let economicAdjustment = economicCondition;
+            let customerAdjustment = customerResponse;
+            
+            let optimalPrice = competitorPrice * baseMultiplier * economicAdjustment * customerAdjustment;
+            optimalPrice = Math.round(optimalPrice * 100) / 100; // Round to 2 decimal places
+            
+            document.getElementById("output").innerText = 
+                `Optimal Price: ${currency}${optimalPrice.toFixed(2)}`;
+        }
+        
+        updateUI();
+    </script>
+</body>
+</html>
